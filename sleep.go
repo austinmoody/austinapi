@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"time"
 )
@@ -17,9 +18,8 @@ var (
 	SleepRegex       = regexp.MustCompile(`^/sleep/*$`)
 	SleepRegexWithID = regexp.MustCompile(`^/sleep/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`)
 
-	//LogBuffer bytes.Buffer
-	//InfoLog   *log.Logger
-	//ErrorLog  *log.Logger
+	InfoLog  *log.Logger
+	ErrorLog *log.Logger
 )
 
 type SleepHandler struct{}
@@ -30,31 +30,36 @@ type SleepList struct {
 	PreviousToken *string              `json:"previous_token"`
 }
 
-//func init() {
-//	InfoLog = log.New(&LogBuffer, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-//	ErrorLog = log.New(&LogBuffer, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
-//}
+func init() {
+	InfoLog = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	ErrorLog = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+}
 
 func (h *SleepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("Test....")
+	w.Header().Set("Content-Type", "application/json")
+
 	switch {
 	case r.Method == http.MethodGet && SleepRegex.MatchString(r.URL.Path):
 		h.ListSleep(w, r)
 	case r.Method == http.MethodGet && SleepRegexWithID.MatchString(r.URL.Path):
 		h.GetSleep(w, r)
 	default:
-		return
+		handleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
+
+}
+
+func handleError(w http.ResponseWriter, statusCode int, message string) {
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(GenericMessage{Message: message})
 }
 
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// TODO - when we have caught an err internal server error and return
 	sleepIdMatches := SleepRegexWithID.FindStringSubmatch(r.URL.Path)
 
 	if len(sleepIdMatches) < 2 {
-		// InternalServerErrorHandler(w, r) // TODO implement
+		ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRegexWithID.String())
+		handleError(w, http.StatusInternalServerError, "Issue parsing specified id")
 		return
 	}
 
@@ -63,11 +68,8 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := pgx.Connect(ctx, connStr)
 	if err != nil {
-		log.Printf("DB Connection error: %v", err)
-		fmt.Printf("DB Connection error: %v", err)
-		//ErrorLog.Printf("DB Connection error: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
+		ErrorLog.Printf("DB Connection error: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
 		return
 	}
 	defer conn.Close(ctx)
@@ -76,36 +78,34 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 
 	sleepUuid, err := uuid.Parse(sleepIdMatches[1])
 	if err != nil {
-		log.Printf("error parsing UUID from http request: %v", err)
-		//ErrorLog.Printf("error parsing UUID from http request: %v", err)
+		ErrorLog.Printf("error parsing UUID from http request: %v", err)
+		handleError(w, http.StatusInternalServerError, fmt.Sprintf("Unable to parse specified id: %s", sleepIdMatches[1]))
+		return
 	}
 
 	getSleepResult, err := apiDb.GetSleep(ctx, sleepUuid)
 
 	if err != nil {
-		log.Printf("error getting sleep with uuid '%s': %v", sleepUuid.String(), err)
-		//ErrorLog.Printf("error getting sleep with uuid '%s': %v", sleepUuid.String(), err)
+		ErrorLog.Printf("error retrieving sleep with id '%s': %v", sleepUuid.String(), err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
 	}
-
-	var result any
 
 	if len(getSleepResult) != 1 {
-		result = GenericMessage{
-			Message: "Not Found",
-		}
-		w.WriteHeader(http.StatusNotFound)
-	} else {
-		result = getSleepResult[0]
-		w.WriteHeader(http.StatusOK)
+		InfoLog.Printf("sleep with id '%s' was not found in database", sleepUuid.String())
+		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with id %s", sleepUuid.String()))
+		return
 	}
 
+	result := getSleepResult[0]
 	jsonBytes, err := json.Marshal(result)
 	if err != nil {
-		log.Printf("error marshaling JSON response: %v", err)
-		//ErrorLog.Printf("error marshaling JSON response: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		ErrorLog.Printf("error marshaling JSON response: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
 	}
 
+	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 }
 
