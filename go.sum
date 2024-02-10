@@ -1,5 +1,7 @@
 github.com/austinmoody/austinapi_db v0.0.7 h1:idcN3o5LCmB1n6629ByU1+w/WzPGcOuZ6j6O6l4xnto=
 github.com/austinmoody/austinapi_db v0.0.7/go.mod h1:gyOC4cdFE+BN00hKE55DZXoFT6Ytt09BsZX8LGUCFw4=
+github.com/austinmoody/austinapi_db v0.0.8 h1:+c2X5JVUpX948sOYL3xZSCZoJnFaWDDe9X8M5vnn3xw=
+github.com/austinmoody/austinapi_db v0.0.8/go.mod h1:gyOC4cdFE+BN00hKE55DZXoFT6Ytt09BsZX8LGUCFw4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
