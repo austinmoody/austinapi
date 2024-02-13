@@ -4,6 +4,8 @@ github.com/austinmoody/austinapi_db v0.0.8 h1:+c2X5JVUpX948sOYL3xZSCZoJnFaWDDe9X
 github.com/austinmoody/austinapi_db v0.0.8/go.mod h1:gyOC4cdFE+BN00hKE55DZXoFT6Ytt09BsZX8LGUCFw4=
 github.com/austinmoody/austinapi_db v0.0.9 h1:CEArNrUwcBdWsjl82w72AM2hQpq8OO9V7hPLgHitHVU=
 github.com/austinmoody/austinapi_db v0.0.9/go.mod h1:gyOC4cdFE+BN00hKE55DZXoFT6Ytt09BsZX8LGUCFw4=
+github.com/austinmoody/austinapi_db v0.0.10 h1:hko8Qyyocs7qSWrz+1pdXd4OtPCb2G5HzdLdLCB+7ho=
+github.com/austinmoody/austinapi_db v0.0.10/go.mod h1:90pgVgTXRXmbak67U2Nv7DwxEdt5/MwsKz9RIlHGGKY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -21,6 +23,8 @@ github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/sqids/sqids-go v0.4.1 h1:eQKYzmAZbLlRwHeHYPF35QhgxwZHLnlmVj9AkIj/rrw=
+github.com/sqids/sqids-go v0.4.1/go.mod h1:EMwHuPQgSNFS0A49jESTfIQS+066XQTVhukrzEPScl8=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=

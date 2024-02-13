@@ -3,21 +3,20 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/austinmoody/austinapi_db/austinapi_db"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/sqids/sqids-go"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
-	"time"
 )
 
 var (
-	SleepRgx          = regexp.MustCompile(`^/sleep/*$`)
-	SleepRgxId        = regexp.MustCompile(`^/sleep/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`)
-	SleepRgxNextToken = regexp.MustCompile(`^/sleep\?(next\_token)\=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`)
+	SleepRgx   = regexp.MustCompile(`^/sleep/*$`)
+	SleepRgxId = regexp.MustCompile(`^/sleep/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`)
+	//SleepRgxNextToken = regexp.MustCompile(`^/sleep\?(next\_token)\=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`)
+	SleepRgxNextToken = regexp.MustCompile(`^/sleep\?(next\_token)\=([0-9a-zA-Z]{10})$`)
 
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
@@ -25,10 +24,41 @@ var (
 
 type SleepHandler struct{}
 
-type SleepList struct {
+// TODO should ListSleepRowToSleep type conversions live in DB or here?
+type Sleeps struct {
 	Data          []austinapi_db.Sleep `json:"data"`
-	NextToken     *string              `json:"next_token"`
-	PreviousToken *string              `json:"previous_token"`
+	NextToken     string               `json:"next_token"`
+	PreviousToken string               `json:"previous_token"`
+}
+
+func (s *Sleeps) CreateFromDbListSleepRow(rows []austinapi_db.ListSleepRow) {
+	s.Data = austinapi_db.ListSleepRowToSleep(rows)
+
+	var previousId string
+	if rows[0].PreviousID < 1 {
+		previousId = ""
+	} else {
+		s, _ := sqids.New(sqids.Options{
+			MinLength: 10,
+		})
+		id, _ := s.Encode([]uint64{uint64(rows[0].PreviousID)})
+		previousId = id
+	}
+
+	var nextId string
+	if rows[len(rows)-1].NextID < 1 {
+		nextId = ""
+	} else {
+		s, _ := sqids.New(sqids.Options{
+			MinLength: 10,
+		})
+		id, _ := s.Encode([]uint64{uint64(rows[len(rows)-1].NextID)})
+		nextId = id
+	}
+
+	s.NextToken = nextId
+	s.PreviousToken = previousId
+
 }
 
 func init() {
@@ -58,58 +88,58 @@ func handleError(w http.ResponseWriter, statusCode int, message string) {
 }
 
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
-	sleepIdMatches := SleepRgxId.FindStringSubmatch(r.URL.String())
-
-	if len(sleepIdMatches) < 2 {
-		ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
-		handleError(w, http.StatusInternalServerError, "Issue parsing specified id")
-		return
-	}
-
-	connStr := GetDatabaseConnectionString()
-	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, connStr)
-	if err != nil {
-		ErrorLog.Printf("DB Connection error: %v", err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-	defer conn.Close(ctx)
-
-	apiDb := austinapi_db.New(conn)
-
-	sleepUuid, err := uuid.Parse(sleepIdMatches[1])
-	if err != nil {
-		ErrorLog.Printf("error parsing UUID from http request: %v", err)
-		handleError(w, http.StatusInternalServerError, fmt.Sprintf("Unable to parse specified id: %s", sleepIdMatches[1]))
-		return
-	}
-
-	getSleepResult, err := apiDb.GetSleep(ctx, sleepUuid)
-
-	if err != nil {
-		ErrorLog.Printf("error retrieving sleep with id '%s': %v", sleepUuid.String(), err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-
-	if len(getSleepResult) != 1 {
-		InfoLog.Printf("sleep with id '%s' was not found in database", sleepUuid.String())
-		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with id %s", sleepUuid.String()))
-		return
-	}
-
-	result := getSleepResult[0]
-	jsonBytes, err := json.Marshal(result)
-	if err != nil {
-		ErrorLog.Printf("error marshaling JSON response: %v", err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonBytes)
+	//sleepIdMatches := SleepRgxId.FindStringSubmatch(r.URL.String())
+	//
+	//if len(sleepIdMatches) < 2 {
+	//	ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
+	//	handleError(w, http.StatusInternalServerError, "Issue parsing specified id")
+	//	return
+	//}
+	//
+	//connStr := GetDatabaseConnectionString()
+	//ctx := context.Background()
+	//
+	//conn, err := pgx.Connect(ctx, connStr)
+	//if err != nil {
+	//	ErrorLog.Printf("DB Connection error: %v", err)
+	//	handleError(w, http.StatusInternalServerError, "Internal Error")
+	//	return
+	//}
+	//defer conn.Close(ctx)
+	//
+	//apiDb := austinapi_db.New(conn)
+	//
+	//sleepUuid, err := uuid.Parse(sleepIdMatches[1])
+	//if err != nil {
+	//	ErrorLog.Printf("error parsing UUID from http request: %v", err)
+	//	handleError(w, http.StatusInternalServerError, fmt.Sprintf("Unable to parse specified id: %s", sleepIdMatches[1]))
+	//	return
+	//}
+	//
+	//getSleepResult, err := apiDb.GetSleep(ctx, sleepUuid)
+	//
+	//if err != nil {
+	//	ErrorLog.Printf("error retrieving sleep with id '%s': %v", sleepUuid.String(), err)
+	//	handleError(w, http.StatusInternalServerError, "Internal Error")
+	//	return
+	//}
+	//
+	//if len(getSleepResult) != 1 {
+	//	InfoLog.Printf("sleep with id '%s' was not found in database", sleepUuid.String())
+	//	handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with id %s", sleepUuid.String()))
+	//	return
+	//}
+	//
+	//result := getSleepResult[0]
+	//jsonBytes, err := json.Marshal(result)
+	//if err != nil {
+	//	ErrorLog.Printf("error marshaling JSON response: %v", err)
+	//	handleError(w, http.StatusInternalServerError, "Internal Error")
+	//	return
+	//}
+	//
+	//w.WriteHeader(http.StatusOK)
+	//w.Write(jsonBytes)
 }
 
 func (h *SleepHandler) GetSleepNextToken(w http.ResponseWriter, r *http.Request) {
@@ -134,39 +164,51 @@ func (h *SleepHandler) GetSleepNextToken(w http.ResponseWriter, r *http.Request)
 
 	apiDb := austinapi_db.New(conn)
 
-	nextTokenUuid, err := uuid.Parse(urlMatches[2])
+	nextTokenSqid := urlMatches[2]
+	nextTokenSlice := IdHasher.Decode(nextTokenSqid)
 	if err != nil {
-		ErrorLog.Printf("error parsing next_token UUID from http request: %v", err)
-		handleError(w, http.StatusInternalServerError, fmt.Sprintf("Unable to parse specified id: %s", urlMatches[2]))
+		ErrorLog.Printf("error decoding next_token: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
 		return
 	}
+	nextToken := nextTokenSlice[0]
 
-	nextDate, err := apiDb.GetSleepDateById(ctx, nextTokenUuid)
+	params := austinapi_db.ListSleepNextParams{
+		ID:    int64(nextToken),
+		Limit: 10,
+	}
+	sleeps, err := apiDb.ListSleepNext(ctx, params)
 	if err != nil {
-		ErrorLog.Printf("error retrieving sleep with id '%s': %v", nextTokenUuid.String(), err)
+		ErrorLog.Printf("error retrieving next items with id '%d': %v", nextToken, err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
 		return
 	}
 
-	if len(nextDate) != 1 {
-		InfoLog.Printf("sleep with id '%s' was not found in database", nextTokenUuid.String())
-		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with id %s", nextTokenUuid.String()))
-		return
+	nextSleeps := austinapi_db.ListSleepNextRowToSleep(sleeps)
+
+	var previousId string
+	if sleeps[0].PreviousID < 1 {
+		previousId = ""
+	} else {
+		id, _ := IdHasher.Encode([]uint64{uint64(sleeps[0].PreviousID)})
+		previousId = id
 	}
 
-	sleeps, err := apiDb.ListSleepNextByDate(ctx, nextDate[0])
-	if err != nil {
-		ErrorLog.Printf("error retrieving next items with date '%s': %v", nextDate[0].String(), err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
+	var nextId string
+	if sleeps[len(sleeps)-1].NextID < 1 {
+		nextId = ""
+	} else {
+		id, _ := IdHasher.Encode([]uint64{uint64(sleeps[len(sleeps)-1].NextID)})
+		nextId = id
 	}
 
-	sleepList := SleepList{
-		Data:          sleeps,
-		NextToken:     nil,
-		PreviousToken: nil,
+	sleepList := Sleeps{
+		Data:          nextSleeps,
+		NextToken:     nextId,
+		PreviousToken: previousId,
 	}
 
+	// TODO - Return ID as sqid?
 	jsonBytes, err := json.Marshal(sleepList)
 	if err != nil {
 		log.Fatalf("%v", err)
@@ -178,32 +220,32 @@ func (h *SleepHandler) GetSleepNextToken(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
-	var sleepArray []austinapi_db.Sleep
 
-	sleepArray = append(sleepArray, austinapi_db.Sleep{
-		ID:               uuid.New(),
-		Date:             time.Now(),
-		Rating:           85,
-		TotalSleep:       3534,
-		DeepSleep:        456456,
-		LightSleep:       234234,
-		RemSleep:         24634,
-		CreatedTimestamp: time.Now(),
-		UpdatedTimestamp: time.Now(),
-	})
+	connStr := GetDatabaseConnectionString()
+	ctx := context.Background()
 
-	sleepList := SleepList{
-		Data:          sleepArray,
-		NextToken:     nil,
-		PreviousToken: nil,
-	}
-
-	jsonBytes, err := json.Marshal(sleepList)
+	conn, err := pgx.Connect(ctx, connStr)
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Fatalf("DB Connection error: %v", err)
+	}
+	defer conn.Close(ctx)
+
+	apiDb := austinapi_db.New(conn)
+
+	sleepsFromDb, err := apiDb.ListSleep(ctx, 10)
+	if err != nil {
+		log.Fatalf("Error getting list of sleep %v\n", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	sleeps := Sleeps{}
+	sleeps.CreateFromDbListSleepRow(sleepsFromDb)
+
+	jsonBytes, err := json.Marshal(sleeps)
+	if err != nil {
+		log.Fatalf("error marshaling JSON response: %v", err)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 
