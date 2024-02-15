@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	// TODO pull length of id from SqidLength see scratch file
-	SleepRgxId   = regexp.MustCompile(fmt.Sprintf(`^/sleep/([0-9a-zA-Z]{%s})$`, SqidLength))
-	SleepListRgx = regexp.MustCompile(`^/sleep(?:\?(next_token|previous_token)=([0-9a-zA-Z]{20}))?$`)
+	SleepRgxId   *regexp.Regexp
+	SleepListRgx *regexp.Regexp
 
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
@@ -23,6 +22,7 @@ var (
 
 type SleepHandler struct{}
 
+// TODO custom Marshal to sqid id's
 type Sleeps struct {
 	Data          []austinapi_db.SleepsRow `json:"data"`
 	NextToken     string                   `json:"next_token"`
@@ -64,6 +64,10 @@ func GetIdFromToken(token string) int64 {
 func init() {
 	InfoLog = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	ErrorLog = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	SleepRgxId = regexp.MustCompile(fmt.Sprintf(`^/sleep/([0-9a-zA-Z]{%s})$`, SqidLength))
+	SleepListRgx = regexp.MustCompile(fmt.Sprintf(`^/sleep(?:\?(next_token|previous_token)=([0-9a-zA-Z]{%s}))?$`, SqidLength))
+
 }
 
 func (h *SleepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +171,7 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 	params := austinapi_db.SleepsParams{
 		QueryType: "",
 		InputID:   0,
-		RowLimit:  10,
+		RowLimit:  ListRowLimit,
 	}
 
 	switch urlMatches[1] {
