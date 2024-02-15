@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/austinmoody/austinapi_db/austinapi_db"
 	"github.com/jackc/pgx/v5"
-	"github.com/sqids/sqids-go"
 	"log"
 	"net/http"
 	"os"
@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	SleepRgxId   = regexp.MustCompile(`^/sleep/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`)
-	SleepListRgx = regexp.MustCompile(`^/sleep(?:\?(next_token|previous_token)=([0-9a-zA-Z]{10}))?$`)
+	// TODO pull length of id from SqidLength see scratch file
+	SleepRgxId   = regexp.MustCompile(fmt.Sprintf(`^/sleep/([0-9a-zA-Z]{%s})$`, SqidLength))
+	SleepListRgx = regexp.MustCompile(`^/sleep(?:\?(next_token|previous_token)=([0-9a-zA-Z]{20}))?$`)
 
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
@@ -35,10 +36,7 @@ func GetNextToken(sleeps []austinapi_db.SleepsRow) string {
 	if nextTokenInt < 1 {
 		nextToken = ""
 	} else {
-		s, _ := sqids.New(sqids.Options{
-			MinLength: 10,
-		})
-		id, _ := s.Encode([]uint64{uint64(nextTokenInt)})
+		id, _ := IdHasher.Encode([]uint64{uint64(nextTokenInt)})
 		nextToken = id
 	}
 
@@ -51,10 +49,7 @@ func GetPreviousToken(sleeps []austinapi_db.SleepsRow) string {
 	if previousTokenInt < 1 {
 		previousToken = ""
 	} else {
-		s, _ := sqids.New(sqids.Options{
-			MinLength: 10,
-		})
-		id, _ := s.Encode([]uint64{uint64(previousTokenInt)})
+		id, _ := IdHasher.Encode([]uint64{uint64(previousTokenInt)})
 		previousToken = id
 	}
 
@@ -90,6 +85,7 @@ func handleError(w http.ResponseWriter, statusCode int, message string) {
 	json.NewEncoder(w).Encode(GenericMessage{Message: message})
 }
 
+// TODO fix GetSleep to use sqlid
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	//sleepIdMatches := SleepRgxId.FindStringSubmatch(r.URL.String())
 	//
