@@ -56,6 +56,24 @@ func ConvertSleepsRow(rows []austinapi_db.SleepsRow) []Sleep {
 	return sleeps
 }
 
+type AustinSleeps austinapi_db.SleepsRow
+
+func (s AustinSleeps) ToSleep() Sleep {
+	var sleep Sleep
+	// TODO - handle potential errors from Encode
+	sleep.ID, _ = IdHasher.Encode([]uint64{uint64(s.ID)})
+	sleep.Date = s.Date
+	sleep.Rating = s.Rating
+	sleep.TotalSleep = s.TotalSleep
+	sleep.DeepSleep = s.DeepSleep
+	sleep.LightSleep = s.LightSleep
+	sleep.RemSleep = s.LightSleep
+	sleep.CreatedTimestamp = s.CreatedTimestamp
+	sleep.UpdatedTimestamp = s.UpdatedTimestamp
+
+	return sleep
+}
+
 func (s *Sleep) PopulateFromDbSleepRow(row austinapi_db.SleepsRow) {
 
 	// TODO - handle potential errors from Encode
@@ -68,6 +86,34 @@ func (s *Sleep) PopulateFromDbSleepRow(row austinapi_db.SleepsRow) {
 	s.RemSleep = row.LightSleep
 	s.CreatedTimestamp = row.CreatedTimestamp
 	s.UpdatedTimestamp = row.UpdatedTimestamp
+}
+
+type SleepsResult []austinapi_db.SleepsRow
+
+func (sr SleepsResult) ToSleeps() Sleeps {
+	var sleeps Sleeps
+
+	// TODO
+
+	return sleeps
+}
+
+type SleepResult austinapi_db.Sleep
+
+func (s SleepResult) ToSleep() Sleep {
+	var sleep Sleep
+
+	sleep.ID, _ = IdHasher.Encode([]uint64{uint64(s.ID)})
+	sleep.Date = s.Date
+	sleep.Rating = s.Rating
+	sleep.TotalSleep = s.TotalSleep
+	sleep.DeepSleep = s.DeepSleep
+	sleep.LightSleep = s.LightSleep
+	sleep.RemSleep = s.RemSleep
+	sleep.CreatedTimestamp = s.CreatedTimestamp
+	sleep.UpdatedTimestamp = s.UpdatedTimestamp
+
+	return sleep
 }
 
 func (s *Sleep) PopulateFromDbSleep(dbSleep austinapi_db.Sleep) {
@@ -182,9 +228,7 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sleep := Sleep{}
-	sleep.PopulateFromDbSleep(getSleepResult[0])
-	jsonBytes, err := json.Marshal(sleep)
+	jsonBytes, err := json.Marshal(SleepResult(getSleepResult[0]).ToSleep())
 	if err != nil {
 		ErrorLog.Printf("error marshaling JSON response: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
