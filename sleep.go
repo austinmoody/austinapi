@@ -13,9 +13,6 @@ import (
 	"time"
 )
 
-// TODO - too much converting going on just to get a sqid instead of the numeric database id, rethink this
-//        has to be something simpler.
-
 var (
 	SleepRgxId   *regexp.Regexp
 	SleepListRgx *regexp.Regexp
@@ -44,56 +41,38 @@ type Sleep struct {
 	UpdatedTimestamp time.Time
 }
 
-func ConvertSleepsRow(rows []austinapi_db.SleepsRow) []Sleep {
-	var sleeps []Sleep
+type SleepsResult []austinapi_db.SleepsRow
+type SleepsItem austinapi_db.SleepsRow
 
-	for _, row := range rows {
-		sleep := Sleep{}
-		sleep.PopulateFromDbSleepRow(row)
-		sleeps = append(sleeps, sleep)
-	}
-
-	return sleeps
-}
-
-type AustinSleeps austinapi_db.SleepsRow
-
-func (s AustinSleeps) ToSleep() Sleep {
+func (si SleepsItem) ToSleep() Sleep {
 	var sleep Sleep
 	// TODO - handle potential errors from Encode
-	sleep.ID, _ = IdHasher.Encode([]uint64{uint64(s.ID)})
-	sleep.Date = s.Date
-	sleep.Rating = s.Rating
-	sleep.TotalSleep = s.TotalSleep
-	sleep.DeepSleep = s.DeepSleep
-	sleep.LightSleep = s.LightSleep
-	sleep.RemSleep = s.LightSleep
-	sleep.CreatedTimestamp = s.CreatedTimestamp
-	sleep.UpdatedTimestamp = s.UpdatedTimestamp
+	sleep.ID, _ = IdHasher.Encode([]uint64{uint64(si.ID)})
+	sleep.Date = si.Date
+	sleep.Rating = si.Rating
+	sleep.TotalSleep = si.TotalSleep
+	sleep.DeepSleep = si.DeepSleep
+	sleep.LightSleep = si.LightSleep
+	sleep.RemSleep = si.LightSleep
+	sleep.CreatedTimestamp = si.CreatedTimestamp
+	sleep.UpdatedTimestamp = si.UpdatedTimestamp
 
 	return sleep
 }
 
-func (s *Sleep) PopulateFromDbSleepRow(row austinapi_db.SleepsRow) {
-
-	// TODO - handle potential errors from Encode
-	s.ID, _ = IdHasher.Encode([]uint64{uint64(row.ID)})
-	s.Date = row.Date
-	s.Rating = row.Rating
-	s.TotalSleep = row.TotalSleep
-	s.DeepSleep = row.DeepSleep
-	s.LightSleep = row.LightSleep
-	s.RemSleep = row.LightSleep
-	s.CreatedTimestamp = row.CreatedTimestamp
-	s.UpdatedTimestamp = row.UpdatedTimestamp
-}
-
-type SleepsResult []austinapi_db.SleepsRow
-
 func (sr SleepsResult) ToSleeps() Sleeps {
 	var sleeps Sleeps
 
-	// TODO
+	var data []Sleep
+
+	for _, row := range sr {
+		data = append(data, SleepsItem(row).ToSleep())
+	}
+
+	sleeps.Data = data
+
+	sleeps.NextToken = sr.GetNextToken()
+	sleeps.PreviousToken = sr.GetPreviousToken()
 
 	return sleeps
 }
@@ -116,22 +95,10 @@ func (s SleepResult) ToSleep() Sleep {
 	return sleep
 }
 
-func (s *Sleep) PopulateFromDbSleep(dbSleep austinapi_db.Sleep) {
-	s.ID, _ = IdHasher.Encode([]uint64{uint64(dbSleep.ID)})
-	s.Date = dbSleep.Date
-	s.Rating = dbSleep.Rating
-	s.TotalSleep = dbSleep.TotalSleep
-	s.DeepSleep = dbSleep.DeepSleep
-	s.LightSleep = dbSleep.LightSleep
-	s.RemSleep = dbSleep.RemSleep
-	s.CreatedTimestamp = dbSleep.CreatedTimestamp
-	s.UpdatedTimestamp = dbSleep.UpdatedTimestamp
-}
-
-func GetNextToken(sleeps []austinapi_db.SleepsRow) string {
+func (sr SleepsResult) GetNextToken() string {
 	var nextToken string
 
-	nextTokenInt := sleeps[len(sleeps)-1].NextID
+	nextTokenInt := sr[len(sr)-1].NextID
 	if nextTokenInt < 1 {
 		nextToken = ""
 	} else {
@@ -142,9 +109,9 @@ func GetNextToken(sleeps []austinapi_db.SleepsRow) string {
 	return nextToken
 }
 
-func GetPreviousToken(sleeps []austinapi_db.SleepsRow) string {
+func (sr SleepsResult) GetPreviousToken() string {
 	var previousToken string
-	previousTokenInt := sleeps[0].PreviousID
+	previousTokenInt := sr[0].PreviousID
 	if previousTokenInt < 1 {
 		previousToken = ""
 	} else {
@@ -185,7 +152,16 @@ func (h *SleepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func handleError(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(GenericMessage{Message: message})
+
+	jsonBytes, err := json.Marshal(GenericMessage{Message: message})
+	if err != nil {
+		ErrorLog.Printf("error marshaling JSON error response: %v", err)
+		return
+	}
+	_, err = w.Write(jsonBytes)
+	if err != nil {
+		ErrorLog.Printf("error writing error response: %v", err)
+	}
 }
 
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
@@ -196,6 +172,8 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 		handleError(w, http.StatusInternalServerError, "Issue parsing specified id")
 		return
 	}
+
+	InfoLog.Printf("URL token match '%s'\n", sleepIdMatches[1])
 
 	sqid := sleepIdMatches[1]
 
@@ -236,7 +214,11 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonBytes)
+	_, err = w.Write(jsonBytes)
+	if err != nil {
+		ErrorLog.Printf("error writing http response: %v\n", err)
+	}
+
 }
 
 func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
@@ -256,7 +238,9 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := pgx.Connect(ctx, connStr)
 	if err != nil {
-		log.Fatalf("DB Connection error: %v", err)
+		ErrorLog.Printf("database connection error: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
 	}
 	defer conn.Close(ctx)
 
@@ -279,21 +263,21 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 
 	sleepsFromDb, err := apiDb.Sleeps(ctx, params)
 	if err != nil {
-		log.Fatalf("Error getting list of sleep %v\n", err)
+		ErrorLog.Printf("error getting list of sleep: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
 	}
 
-	sleeps := Sleeps{}
-	sleeps.Data = ConvertSleepsRow(sleepsFromDb)
-	sleeps.NextToken = GetNextToken(sleepsFromDb)
-	sleeps.PreviousToken = GetPreviousToken(sleepsFromDb)
-
-	jsonBytes, err := json.Marshal(sleeps)
+	jsonBytes, err := json.Marshal(SleepsResult(sleepsFromDb).ToSleeps())
 	if err != nil {
-		log.Fatalf("error marshaling JSON response: %v", err)
+		ErrorLog.Printf("error marshaling JSON response: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonBytes)
-
+	_, err = w.Write(jsonBytes)
+	if err != nil {
+		ErrorLog.Printf("error writing http response: %v", err)
+	}
 }
