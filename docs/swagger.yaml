@@ -1,4 +1,9 @@
 definitions:
+  main.GenericMessage:
+    properties:
+      message:
+        type: string
+    type: object
   main.Sleep:
     properties:
       createdTimestamp:
@@ -20,14 +25,58 @@ definitions:
       updatedTimestamp:
         type: string
     type: object
+  main.Sleeps:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/main.Sleep'
+        type: array
+      next_token:
+        type: string
+      previous_token:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /sleep:
+    get:
+      description: |-
+        Retrieves list of sleep information in descending order by date
+        Specifying no query parameters pulls list starting with latest
+        Caller can then specify a next_token or previous_token returned from
+        calls to go forward and back in the list of items.  Only next_token OR
+        previous_token should be specified.
+      parameters:
+      - description: next list search by next_token
+        format: string
+        in: query
+        name: next_token
+        type: string
+      - description: previous list search by previous_token
+        format: string
+        in: query
+        name: previous_token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Sleeps'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      summary: Get list of sleep information
+      tags:
+      - sleep
   /sleep/{id}:
     get:
       consumes:
       - application/json
-      description: Retrieves sleep information
+      description: Retrieves sleep information with specified ID
       parameters:
       - description: Sleep ID
         in: path
@@ -41,7 +90,15 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/main.Sleep'
-      summary: Get sleep information
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      summary: Get sleep information by ID
       tags:
       - sleep
 swagger: "2.0"

@@ -164,13 +164,15 @@ func handleError(w http.ResponseWriter, statusCode int, message string) {
 	}
 }
 
-// @Summary Get sleep information
-// @Description Retrieves sleep information
+// @Summary Get sleep information by ID
+// @Description Retrieves sleep information with specified ID
 // @Tags sleep
 // @Accept json
 // @Produce json
 // @Param id path string true "Sleep ID"
 // @Success 200 {object} Sleep
+// @Failure 500 {object} GenericMessage
+// @Failure 404 {object} GenericMessage
 // @Router /sleep/{id} [get]
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	sleepIdMatches := SleepRgxId.FindStringSubmatch(r.URL.String())
@@ -229,6 +231,19 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// @Summary Get list of sleep information
+// @Description Retrieves list of sleep information in descending order by date
+// @Description Specifying no query parameters pulls list starting with latest
+// @Description Caller can then specify a next_token or previous_token returned from
+// @Description calls to go forward and back in the list of items.  Only next_token OR
+// @Description previous_token should be specified.
+// @Tags sleep
+// @Produce json
+// @Param next_token query string false "next list search by next_token" Format(string)
+// @Param previous_token query string false "previous list search by previous_token" Format(string)
+// @Success 200 {object} Sleeps
+// @Failure 500 {object} GenericMessage
+// @Router /sleep [get]
 func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 	urlMatches := SleepListRgx.FindStringSubmatch(r.URL.String())
 

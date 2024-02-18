@@ -15,9 +15,51 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/sleep": {
+            "get": {
+                "description": "Retrieves list of sleep information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token or previous_token returned from\ncalls to go forward and back in the list of items.  Only next_token OR\nprevious_token should be specified.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sleep"
+                ],
+                "summary": "Get list of sleep information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "next list search by next_token",
+                        "name": "next_token",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "previous list search by previous_token",
+                        "name": "previous_token",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Sleeps"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
         "/sleep/{id}": {
             "get": {
-                "description": "Retrieves sleep information",
+                "description": "Retrieves sleep information with specified ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +69,7 @@ const docTemplate = `{
                 "tags": [
                     "sleep"
                 ],
-                "summary": "Get sleep information",
+                "summary": "Get sleep information by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -43,12 +85,32 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.Sleep"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
+        "main.GenericMessage": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "main.Sleep": {
             "type": "object",
             "properties": {
@@ -77,6 +139,23 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "updatedTimestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Sleeps": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/main.Sleep"
+                    }
+                },
+                "next_token": {
+                    "type": "string"
+                },
+                "previous_token": {
                     "type": "string"
                 }
             }
