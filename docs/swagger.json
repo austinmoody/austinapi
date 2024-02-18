@@ -1,0 +1,74 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/sleep/{id}": {
+            "get": {
+                "description": "Retrieves sleep information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sleep"
+                ],
+                "summary": "Get sleep information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Sleep ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Sleep"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.Sleep": {
+            "type": "object",
+            "properties": {
+                "createdTimestamp": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "deepSleep": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lightSleep": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "remSleep": {
+                    "type": "integer"
+                },
+                "totalSleep": {
+                    "type": "integer"
+                },
+                "updatedTimestamp": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

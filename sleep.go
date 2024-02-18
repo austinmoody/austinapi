@@ -164,6 +164,14 @@ func handleError(w http.ResponseWriter, statusCode int, message string) {
 	}
 }
 
+// @Summary Get sleep information
+// @Description Retrieves sleep information
+// @Tags sleep
+// @Accept json
+// @Produce json
+// @Param id path string true "Sleep ID"
+// @Success 200 {object} Sleep
+// @Router /sleep/{id} [get]
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	sleepIdMatches := SleepRgxId.FindStringSubmatch(r.URL.String())
 
