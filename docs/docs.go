@@ -15,37 +15,39 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/sleep": {
+        "/sleep/date/{date}": {
             "get": {
-                "description": "Retrieves list of sleep information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token or previous_token returned from\ncalls to go forward and back in the list of items.  Only next_token OR\nprevious_token should be specified.",
+                "description": "Retrieves sleep information with specified date",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "sleep"
                 ],
-                "summary": "Get list of sleep information",
+                "summary": "Get sleep information by date",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "string",
-                        "description": "next list search by next_token",
-                        "name": "next_token",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "format": "string",
-                        "description": "previous list search by previous_token",
-                        "name": "previous_token",
-                        "in": "query"
+                        "description": "Date",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/main.Sleeps"
+                            "$ref": "#/definitions/main.Sleep"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
                         }
                     },
                     "500": {
@@ -57,7 +59,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sleep/{id}": {
+        "/sleep/id/{id}": {
             "get": {
                 "description": "Retrieves sleep information with specified ID",
                 "consumes": [
@@ -90,6 +92,48 @@ const docTemplate = `{
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/sleep/list": {
+            "get": {
+                "description": "Retrieves list of sleep information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token or previous_token returned from\ncalls to go forward and back in the list of items.  Only next_token OR\nprevious_token should be specified.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sleep"
+                ],
+                "summary": "Get list of sleep information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "next list search by next_token",
+                        "name": "next_token",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "previous list search by previous_token",
+                        "name": "previous_token",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Sleeps"
                         }
                     },
                     "500": {

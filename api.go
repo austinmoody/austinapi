@@ -9,8 +9,6 @@ import (
 	"net/http"
 )
 
-// TODO Read these things from .evn: Port #, # of items to bring back in queries...
-
 var (
 	IdHasher      sqids.Sqids
 	SqidLength    string

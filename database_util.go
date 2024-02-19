@@ -7,7 +7,6 @@ import (
 	"os"
 )
 
-// TODO can this be added to austinapi_db?
 func GetDatabaseConnectionString() string {
 	err := godotenv.Load()
 	if err != nil {

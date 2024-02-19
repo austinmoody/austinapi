@@ -39,7 +39,65 @@ definitions:
 info:
   contact: {}
 paths:
-  /sleep:
+  /sleep/date/{date}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves sleep information with specified date
+      parameters:
+      - description: Date
+        in: path
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Sleep'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      summary: Get sleep information by date
+      tags:
+      - sleep
+  /sleep/id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves sleep information with specified ID
+      parameters:
+      - description: Sleep ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Sleep'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      summary: Get sleep information by ID
+      tags:
+      - sleep
+  /sleep/list:
     get:
       description: |-
         Retrieves list of sleep information in descending order by date
@@ -70,35 +128,6 @@ paths:
           schema:
             $ref: '#/definitions/main.GenericMessage'
       summary: Get list of sleep information
-      tags:
-      - sleep
-  /sleep/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves sleep information with specified ID
-      parameters:
-      - description: Sleep ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/main.Sleep'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/main.GenericMessage'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/main.GenericMessage'
-      summary: Get sleep information by ID
       tags:
       - sleep
 swagger: "2.0"

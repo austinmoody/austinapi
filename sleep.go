@@ -13,9 +13,12 @@ import (
 	"time"
 )
 
+// TODO - create requestId to tie things together in the logs
+
 var (
 	SleepRgxId   *regexp.Regexp
 	SleepListRgx *regexp.Regexp
+	SleepRgxDate *regexp.Regexp
 
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
@@ -131,9 +134,9 @@ func init() {
 	InfoLog = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	ErrorLog = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
-	SleepRgxId = regexp.MustCompile(fmt.Sprintf(`^/sleep/([0-9a-zA-Z]{%s})$`, SqidLength))
-	SleepListRgx = regexp.MustCompile(fmt.Sprintf(`^/sleep(?:\?(next_token|previous_token)=([0-9a-zA-Z]{%s}))?$`, SqidLength))
-
+	SleepRgxId = regexp.MustCompile(fmt.Sprintf(`^/sleep/id/([0-9a-zA-Z]{%s})$`, SqidLength))
+	SleepListRgx = regexp.MustCompile(fmt.Sprintf(`^/sleep/list(?:\?(next_token|previous_token)=([0-9a-zA-Z]{%s}))?$`, SqidLength))
+	SleepRgxDate = regexp.MustCompile(`^/sleep/date/([0-9]{4}-[0-9]{2}-[0-9]{2})$`)
 }
 
 func (h *SleepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -144,6 +147,8 @@ func (h *SleepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.ListSleep(w, r)
 	case r.Method == http.MethodGet && SleepRgxId.MatchString(r.URL.String()):
 		h.GetSleep(w, r)
+	case r.Method == http.MethodGet && SleepRgxDate.MatchString(r.URL.String()):
+		h.GetSleepByDate(w, r)
 	default:
 		handleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
@@ -173,7 +178,7 @@ func handleError(w http.ResponseWriter, statusCode int, message string) {
 // @Success 200 {object} Sleep
 // @Failure 500 {object} GenericMessage
 // @Failure 404 {object} GenericMessage
-// @Router /sleep/{id} [get]
+// @Router /sleep/id/{id} [get]
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	sleepIdMatches := SleepRgxId.FindStringSubmatch(r.URL.String())
 
@@ -231,6 +236,77 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// @Summary Get sleep information by date
+// @Description Retrieves sleep information with specified date
+// @Tags sleep
+// @Accept json
+// @Produce json
+// @Param date path string true "Date"
+// @Success 200 {object} Sleep
+// @Failure 500 {object} GenericMessage
+// @Failure 404 {object} GenericMessage
+// @Router /sleep/date/{date} [get]
+func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
+	sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
+
+	if len(sleepDateMatches) < 2 {
+		ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
+		handleError(w, http.StatusInternalServerError, "Issue parsing specified date")
+		return
+	}
+
+	InfoLog.Printf("URL token match '%s'\n", sleepDateMatches[1])
+
+	sleepDateString := sleepDateMatches[1]
+	sleepDate, err := time.Parse("2006-01-02", sleepDateString)
+	if err != nil {
+		ErrorLog.Printf("Unable to parse '%s' to time.Time object: %v", sleepDateString, err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+
+	connStr := GetDatabaseConnectionString()
+	ctx := context.Background()
+
+	conn, err := pgx.Connect(ctx, connStr)
+	if err != nil {
+		ErrorLog.Printf("DB Connection error: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+	defer conn.Close(ctx)
+
+	apiDb := austinapi_db.New(conn)
+
+	getSleepResult, err := apiDb.GetSleepByDate(ctx, sleepDate)
+
+	if err != nil {
+		ErrorLog.Printf("error retrieving sleep with date '%v': %v", sleepDateString, err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+
+	if len(getSleepResult) != 1 {
+		InfoLog.Printf("sleep with date '%s' was not found in database", sleepDateString)
+		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with date %s", sleepDateString))
+		return
+	}
+
+	jsonBytes, err := json.Marshal(SleepResult(getSleepResult[0]).ToSleep())
+	if err != nil {
+		ErrorLog.Printf("error marshaling JSON response: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(jsonBytes)
+	if err != nil {
+		ErrorLog.Printf("error writing http response: %v\n", err)
+	}
+
+}
+
 // @Summary Get list of sleep information
 // @Description Retrieves list of sleep information in descending order by date
 // @Description Specifying no query parameters pulls list starting with latest
@@ -243,7 +319,7 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 // @Param previous_token query string false "previous list search by previous_token" Format(string)
 // @Success 200 {object} Sleeps
 // @Failure 500 {object} GenericMessage
-// @Router /sleep [get]
+// @Router /sleep/list [get]
 func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 	urlMatches := SleepListRgx.FindStringSubmatch(r.URL.String())
 
@@ -253,8 +329,11 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	InfoLog.Printf("URL directive match '%s'\n", urlMatches[1])
-	InfoLog.Printf("URL token match '%s'\n", urlMatches[2])
+	queryType := urlMatches[1]
+	queryToken := urlMatches[2]
+
+	InfoLog.Printf("URL directive match '%s'\n", queryType)
+	InfoLog.Printf("URL token match '%s'\n", queryToken)
 
 	connStr := GetDatabaseConnectionString()
 	ctx := context.Background()
@@ -275,19 +354,25 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 		RowLimit:  ListRowLimit,
 	}
 
-	switch urlMatches[1] {
+	switch queryType {
 	case "next_token":
 		params.QueryType = "NEXT"
-		params.InputID = GetIdFromToken(urlMatches[2])
+		params.InputID = GetIdFromToken(queryToken)
 	case "previous_token":
 		params.QueryType = "PREVIOUS"
-		params.InputID = GetIdFromToken(urlMatches[2])
+		params.InputID = GetIdFromToken(queryToken)
 	}
 
 	sleepsFromDb, err := apiDb.Sleeps(ctx, params)
 	if err != nil {
 		ErrorLog.Printf("error getting list of sleep: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+
+	if len(sleepsFromDb) < 1 {
+		ErrorLog.Printf("no results from database with '%' token '%s'", queryType, queryToken)
+		handleError(w, http.StatusNotFound, "no results found")
 		return
 	}
 
