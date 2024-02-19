@@ -58,8 +58,11 @@ func main() {
 		http.ServeFile(w, r, "./docs/swagger.yaml")
 	})
 
-	mux.Handle("/sleep", &SleepHandler{})
-	mux.Handle("/sleep/", &SleepHandler{})
+	//mux.Handle("/sleep", &SleepHandler{})
+	//mux.Handle("/sleep/", &SleepHandler{})
+
+	mux.Handle("/sleep", authenticator(&SleepHandler{}))
+	mux.Handle("/sleep/", authenticator(&SleepHandler{}))
 
 	http.ListenAndServe(ListeningPort, mux)
 
