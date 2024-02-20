@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/sleep/date/{date}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves sleep information with specified date",
                 "consumes": [
                     "application/json"
@@ -35,6 +40,13 @@ const docTemplate = `{
                         "name": "date",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -43,6 +55,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.Sleep"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     },
                     "404": {
                         "description": "Not Found",
@@ -61,6 +76,11 @@ const docTemplate = `{
         },
         "/sleep/id/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves sleep information with specified ID",
                 "consumes": [
                     "application/json"
@@ -79,6 +99,13 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -87,6 +114,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.Sleep"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     },
                     "404": {
                         "description": "Not Found",
@@ -105,6 +135,11 @@ const docTemplate = `{
         },
         "/sleep/list": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Retrieves list of sleep information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token or previous_token returned from\ncalls to go forward and back in the list of items.  Only next_token OR\nprevious_token should be specified.",
                 "produces": [
                     "application/json"
@@ -127,6 +162,13 @@ const docTemplate = `{
                         "description": "previous list search by previous_token",
                         "name": "previous_token",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -135,6 +177,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.Sleeps"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     },
                     "500": {
                         "description": "Internal Server Error",

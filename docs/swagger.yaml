@@ -50,6 +50,11 @@ paths:
         name: date
         required: true
         type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -57,6 +62,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/main.Sleep'
+        "401":
+          description: Unauthorized
         "404":
           description: Not Found
           schema:
@@ -65,6 +72,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
       summary: Get sleep information by date
       tags:
       - sleep
@@ -79,6 +88,11 @@ paths:
         name: id
         required: true
         type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -86,6 +100,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/main.Sleep'
+        "401":
+          description: Unauthorized
         "404":
           description: Not Found
           schema:
@@ -94,6 +110,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
       summary: Get sleep information by ID
       tags:
       - sleep
@@ -116,6 +134,11 @@ paths:
         in: query
         name: previous_token
         type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -123,10 +146,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/main.Sleeps'
+        "401":
+          description: Unauthorized
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
       summary: Get list of sleep information
       tags:
       - sleep

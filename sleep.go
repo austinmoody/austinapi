@@ -170,14 +170,17 @@ func handleError(w http.ResponseWriter, statusCode int, message string) {
 }
 
 // @Summary Get sleep information by ID
+// @Security ApiKeyAuth
 // @Description Retrieves sleep information with specified ID
 // @Tags sleep
 // @Accept json
 // @Produce json
 // @Param id path string true "Sleep ID"
+// @Param Authorization header string true "Bearer Token"
 // @Success 200 {object} Sleep
 // @Failure 500 {object} GenericMessage
 // @Failure 404 {object} GenericMessage
+// @Failure 401
 // @Router /sleep/id/{id} [get]
 func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	sleepIdMatches := SleepRgxId.FindStringSubmatch(r.URL.String())
@@ -237,14 +240,17 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary Get sleep information by date
+// @Security ApiKeyAuth
 // @Description Retrieves sleep information with specified date
 // @Tags sleep
 // @Accept json
 // @Produce json
 // @Param date path string true "Date"
+// @Param Authorization header string true "Bearer Token"
 // @Success 200 {object} Sleep
 // @Failure 500 {object} GenericMessage
 // @Failure 404 {object} GenericMessage
+// @Failure 401
 // @Router /sleep/date/{date} [get]
 func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
 	sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
@@ -308,6 +314,7 @@ func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary Get list of sleep information
+// @Security ApiKeyAuth
 // @Description Retrieves list of sleep information in descending order by date
 // @Description Specifying no query parameters pulls list starting with latest
 // @Description Caller can then specify a next_token or previous_token returned from
@@ -317,8 +324,10 @@ func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param next_token query string false "next list search by next_token" Format(string)
 // @Param previous_token query string false "previous list search by previous_token" Format(string)
+// @Param Authorization header string true "Bearer Token"
 // @Success 200 {object} Sleeps
 // @Failure 500 {object} GenericMessage
+// @Failure 401
 // @Router /sleep/list [get]
 func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 	urlMatches := SleepListRgx.FindStringSubmatch(r.URL.String())
