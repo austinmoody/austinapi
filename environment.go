@@ -10,7 +10,7 @@ import (
 func GetString(key string) string {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("error loading .env file")
+		log.Printf(".env not found, using environment")
 	}
 
 	return os.Getenv(key)
@@ -19,7 +19,7 @@ func GetString(key string) string {
 func GetInt(key string) int {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("error loading .env file")
+		log.Printf(".env not found, using environment")
 	}
 
 	returnInt, err := strconv.Atoi(os.Getenv(key))

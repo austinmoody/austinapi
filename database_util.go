@@ -10,7 +10,7 @@ import (
 func GetDatabaseConnectionString() string {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Printf(".env not found, using environment")
 	}
 
 	databaseHost := os.Getenv("DATABASE_HOST")

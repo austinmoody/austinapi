@@ -20,7 +20,7 @@ func init() {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Printf(".env not found, using environment")
 	}
 
 	sqidLength := GetUint8("SQID_LENGTH")
