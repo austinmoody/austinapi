@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"github.com/austinmoody/austinapi_db/austinapi_db"
 	"github.com/jackc/pgx/v5"
-	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"time"
 )
@@ -19,9 +17,6 @@ var (
 	SleepRgxId   *regexp.Regexp
 	SleepListRgx *regexp.Regexp
 	SleepRgxDate *regexp.Regexp
-
-	InfoLog  *log.Logger
-	ErrorLog *log.Logger
 )
 
 type SleepHandler struct{}
@@ -125,15 +120,7 @@ func (sr SleepsResult) GetPreviousToken() string {
 	return previousToken
 }
 
-func GetIdFromToken(token string) int64 {
-	nextTokenSlice := IdHasher.Decode(token)
-	return int64(nextTokenSlice[0])
-}
-
 func init() {
-	InfoLog = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-	ErrorLog = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
-
 	SleepRgxId = regexp.MustCompile(fmt.Sprintf(`^/sleep/id/([0-9a-zA-Z]{%s})$`, SqidLength))
 	SleepListRgx = regexp.MustCompile(fmt.Sprintf(`^/sleep/list(?:\?(next_token|previous_token)=([0-9a-zA-Z]{%s}))?$`, SqidLength))
 	SleepRgxDate = regexp.MustCompile(`^/sleep/date/([0-9]{4}-[0-9]{2}-[0-9]{2})$`)

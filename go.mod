@@ -3,7 +3,7 @@ module github.com/austinmoody/austinapi
 go 1.21.5
 
 require (
-	github.com/austinmoody/austinapi_db v0.0.11
+	github.com/austinmoody/austinapi_db v0.0.12
 	github.com/cristalhq/jwt/v5 v5.4.0
 	github.com/jackc/pgx/v5 v5.5.3
 	github.com/joho/godotenv v1.5.1

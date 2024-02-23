@@ -7,6 +7,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
+	"os"
 )
 
 var (
@@ -14,6 +15,8 @@ var (
 	SqidLength    string
 	ListeningPort string
 	ListRowLimit  int32
+	InfoLog       *log.Logger
+	ErrorLog      *log.Logger
 )
 
 func init() {
@@ -36,6 +39,9 @@ func init() {
 
 	ListRowLimit = GetInt32("LIST_ROW_LIMIT")
 
+	InfoLog = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	ErrorLog = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+
 }
 
 func main() {
@@ -43,8 +49,6 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Serve Swagger UI files
-	//mux.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(http.Dir("swagger-ui"))))
-	//mux.Handle("/swagger/", httpSwagger.WrapHandler)
 	mux.Handle("/swagger/", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/swagger.json"), // URL to the Swagger JSON file
 	))
@@ -58,12 +62,17 @@ func main() {
 		http.ServeFile(w, r, "./docs/swagger.yaml")
 	})
 
-	//mux.Handle("/sleep", &SleepHandler{})
-	//mux.Handle("/sleep/", &SleepHandler{})
-
 	mux.Handle("/sleep", authenticator(&SleepHandler{}))
 	mux.Handle("/sleep/", authenticator(&SleepHandler{}))
 
+	mux.Handle("/readyscore", authenticator(&ReadyScoreHandler{}))
+	mux.Handle("/readyscore/", authenticator(&ReadyScoreHandler{}))
+
 	http.ListenAndServe(ListeningPort, mux)
 
+}
+
+func GetIdFromToken(token string) int64 {
+	nextTokenSlice := IdHasher.Decode(token)
+	return int64(nextTokenSlice[0])
 }
