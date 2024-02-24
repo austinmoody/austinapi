@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/austinmoody/austinapi_db/austinapi_db"
 	"github.com/jackc/pgx/v5"
 	"net/http"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -22,9 +22,8 @@ var (
 type SleepHandler struct{}
 
 type Sleeps struct {
-	Data          []Sleep `json:"data"`
-	NextToken     string  `json:"next_token"`
-	PreviousToken string  `json:"previous_token"`
+	Data      []austinapi_db.Sleep `json:"data"`
+	NextToken int32                `json:"next_token"`
 }
 
 type Sleep struct {
@@ -58,22 +57,22 @@ func (si SleepsItem) ToSleep() Sleep {
 	return sleep
 }
 
-func (sr SleepsResult) ToSleeps() Sleeps {
-	var sleeps Sleeps
-
-	var data []Sleep
-
-	for _, row := range sr {
-		data = append(data, SleepsItem(row).ToSleep())
-	}
-
-	sleeps.Data = data
-
-	sleeps.NextToken = sr.GetNextToken()
-	sleeps.PreviousToken = sr.GetPreviousToken()
-
-	return sleeps
-}
+//func (sr SleepsResult) ToSleeps() Sleeps {
+//	var sleeps Sleeps
+//
+//	var data []Sleep
+//
+//	for _, row := range sr {
+//		data = append(data, SleepsItem(row).ToSleep())
+//	}
+//
+//	sleeps.Data = data
+//
+//	sleeps.NextToken = sr.GetNextToken()
+//	sleeps.PreviousToken = sr.GetPreviousToken()
+//
+//	return sleeps
+//}
 
 type SleepResult austinapi_db.Sleep
 
@@ -121,8 +120,8 @@ func (sr SleepsResult) GetPreviousToken() string {
 }
 
 func init() {
-	SleepRgxId = regexp.MustCompile(fmt.Sprintf(`^/sleep/id/([0-9a-zA-Z]{%s})$`, SqidLength))
-	SleepListRgx = regexp.MustCompile(fmt.Sprintf(`^/sleep/list(?:\?(next_token|previous_token)=([0-9a-zA-Z]{%s}))?$`, SqidLength))
+	SleepRgxId = regexp.MustCompile(`^/sleep/id/([0-9]{1,})$`)
+	SleepListRgx = regexp.MustCompile(`^/sleep/list(?:\?(next_token)=([0-9]{1,}))?$`)
 	SleepRgxDate = regexp.MustCompile(`^/sleep/date/([0-9]{4}-[0-9]{2}-[0-9]{2})$`)
 }
 
@@ -180,7 +179,11 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 
 	InfoLog.Printf("URL token match '%s'\n", sleepIdMatches[1])
 
-	sqid := sleepIdMatches[1]
+	sleepId, err := strconv.ParseInt(sleepIdMatches[1], 10, 64)
+	if err != nil {
+		ErrorLog.Printf("issue converting sleep id to int64: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+	}
 
 	connStr := GetDatabaseConnectionString()
 	ctx := context.Background()
@@ -195,23 +198,15 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 
 	apiDb := austinapi_db.New(conn)
 
-	idFromSqid := GetIdFromToken(sqid)
-
-	getSleepResult, err := apiDb.GetSleep(ctx, idFromSqid)
+	getSleepResult, err := apiDb.GetSleep(ctx, sleepId)
 
 	if err != nil {
-		ErrorLog.Printf("error retrieving sleep with id '%v': %v", idFromSqid, err)
+		ErrorLog.Printf("error retrieving sleep with id '%v': %v", sleepId, err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
 		return
 	}
 
-	if len(getSleepResult) != 1 {
-		InfoLog.Printf("sleep with id '%v was not found in database", idFromSqid)
-		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with id %s", sqid))
-		return
-	}
-
-	jsonBytes, err := json.Marshal(SleepResult(getSleepResult[0]).ToSleep())
+	jsonBytes, err := json.Marshal(getSleepResult)
 	if err != nil {
 		ErrorLog.Printf("error marshaling JSON response: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
@@ -240,63 +235,63 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 // @Failure 401
 // @Router /sleep/date/{date} [get]
 func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
-	sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
-
-	if len(sleepDateMatches) < 2 {
-		ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
-		handleError(w, http.StatusInternalServerError, "Issue parsing specified date")
-		return
-	}
-
-	InfoLog.Printf("URL token match '%s'\n", sleepDateMatches[1])
-
-	sleepDateString := sleepDateMatches[1]
-	sleepDate, err := time.Parse("2006-01-02", sleepDateString)
-	if err != nil {
-		ErrorLog.Printf("Unable to parse '%s' to time.Time object: %v", sleepDateString, err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-
-	connStr := GetDatabaseConnectionString()
-	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, connStr)
-	if err != nil {
-		ErrorLog.Printf("DB Connection error: %v", err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-	defer conn.Close(ctx)
-
-	apiDb := austinapi_db.New(conn)
-
-	getSleepResult, err := apiDb.GetSleepByDate(ctx, sleepDate)
-
-	if err != nil {
-		ErrorLog.Printf("error retrieving sleep with date '%v': %v", sleepDateString, err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-
-	if len(getSleepResult) != 1 {
-		InfoLog.Printf("sleep with date '%s' was not found in database", sleepDateString)
-		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with date %s", sleepDateString))
-		return
-	}
-
-	jsonBytes, err := json.Marshal(SleepResult(getSleepResult[0]).ToSleep())
-	if err != nil {
-		ErrorLog.Printf("error marshaling JSON response: %v", err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(jsonBytes)
-	if err != nil {
-		ErrorLog.Printf("error writing http response: %v\n", err)
-	}
+	//sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
+	//
+	//if len(sleepDateMatches) < 2 {
+	//	ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
+	//	handleError(w, http.StatusInternalServerError, "Issue parsing specified date")
+	//	return
+	//}
+	//
+	//InfoLog.Printf("URL token match '%s'\n", sleepDateMatches[1])
+	//
+	//sleepDateString := sleepDateMatches[1]
+	//sleepDate, err := time.Parse("2006-01-02", sleepDateString)
+	//if err != nil {
+	//	ErrorLog.Printf("Unable to parse '%s' to time.Time object: %v", sleepDateString, err)
+	//	handleError(w, http.StatusInternalServerError, "Internal Error")
+	//	return
+	//}
+	//
+	//connStr := GetDatabaseConnectionString()
+	//ctx := context.Background()
+	//
+	//conn, err := pgx.Connect(ctx, connStr)
+	//if err != nil {
+	//	ErrorLog.Printf("DB Connection error: %v", err)
+	//	handleError(w, http.StatusInternalServerError, "Internal Error")
+	//	return
+	//}
+	//defer conn.Close(ctx)
+	//
+	//apiDb := austinapi_db.New(conn)
+	//
+	//getSleepResult, err := apiDb.GetSleepByDate(ctx, sleepDate)
+	//
+	//if err != nil {
+	//	ErrorLog.Printf("error retrieving sleep with date '%v': %v", sleepDateString, err)
+	//	handleError(w, http.StatusInternalServerError, "Internal Error")
+	//	return
+	//}
+	//
+	//if len(getSleepResult) != 1 {
+	//	InfoLog.Printf("sleep with date '%s' was not found in database", sleepDateString)
+	//	handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with date %s", sleepDateString))
+	//	return
+	//}
+	//
+	//jsonBytes, err := json.Marshal(SleepResult(getSleepResult[0]).ToSleep())
+	//if err != nil {
+	//	ErrorLog.Printf("error marshaling JSON response: %v", err)
+	//	handleError(w, http.StatusInternalServerError, "Internal Error")
+	//	return
+	//}
+	//
+	//w.WriteHeader(http.StatusOK)
+	//_, err = w.Write(jsonBytes)
+	//if err != nil {
+	//	ErrorLog.Printf("error writing http response: %v\n", err)
+	//}
 
 }
 
@@ -344,35 +339,41 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 
 	apiDb := austinapi_db.New(conn)
 
-	params := austinapi_db.SleepsParams{
-		QueryType: "",
-		InputID:   0,
-		RowLimit:  ListRowLimit,
+	params := austinapi_db.GetSleepsParams{
+		RowOffset: 0,
+		RowLimit:  5,
 	}
 
-	switch queryType {
-	case "next_token":
-		params.QueryType = "NEXT"
-		params.InputID = GetIdFromToken(queryToken)
-	case "previous_token":
-		params.QueryType = "PREVIOUS"
-		params.InputID = GetIdFromToken(queryToken)
+	if queryType == "next_token" {
+		rowOffset, err := strconv.ParseInt(queryToken, 10, 32)
+		if err != nil {
+			ErrorLog.Printf("error parsing specified query token '%v': %v", queryToken, err)
+			handleError(w, http.StatusBadRequest, "Invalid query token")
+			return
+		}
+
+		params.RowOffset = int32(rowOffset)
 	}
 
-	sleepsFromDb, err := apiDb.Sleeps(ctx, params)
+	results, err := apiDb.GetSleeps(ctx, params)
 	if err != nil {
 		ErrorLog.Printf("error getting list of sleep: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
 		return
 	}
 
-	if len(sleepsFromDb) < 1 {
+	if len(results) < 1 {
 		ErrorLog.Printf("no results from database with '%' token '%s'", queryType, queryToken)
 		handleError(w, http.StatusNotFound, "no results found")
 		return
 	}
 
-	jsonBytes, err := json.Marshal(SleepsResult(sleepsFromDb).ToSleeps())
+	sleeps := Sleeps{
+		Data:      results,
+		NextToken: params.RowLimit + params.RowOffset,
+	}
+
+	jsonBytes, err := json.Marshal(sleeps)
 	if err != nil {
 		ErrorLog.Printf("error marshaling JSON response: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
