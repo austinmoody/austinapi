@@ -36,11 +36,11 @@ func (h *SleepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case r.Method == http.MethodGet && SleepListRgx.MatchString(r.URL.String()):
-		h.ListSleep(w, r)
+		h.listSleep(w, r)
 	case r.Method == http.MethodGet && SleepRgxId.MatchString(r.URL.String()):
 		h.getSleep(w, r)
 	case r.Method == http.MethodGet && SleepRgxDate.MatchString(r.URL.String()):
-		h.GetSleepByDate(w, r)
+		h.getSleepByDate(w, r)
 	default:
 		handleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
@@ -114,7 +114,7 @@ func (h *SleepHandler) getSleep(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} GenericMessage
 // @Failure 401
 // @Router /sleep/date/{date} [get]
-func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
+func (h *SleepHandler) getSleepByDate(w http.ResponseWriter, r *http.Request) {
 	sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
 
 	if len(sleepDateMatches) < 2 {
@@ -176,7 +176,7 @@ func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} GenericMessage
 // @Failure 401
 // @Router /sleep/list [get]
-func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
+func (h *SleepHandler) listSleep(w http.ResponseWriter, r *http.Request) {
 	urlMatches := SleepListRgx.FindStringSubmatch(r.URL.String())
 
 	if len(urlMatches) != 3 {

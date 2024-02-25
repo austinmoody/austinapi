@@ -34,11 +34,11 @@ func (h *ReadyScoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case r.Method == http.MethodGet && ReadyScoreListRgx.MatchString(r.URL.String()):
-		h.ListReadyScore(w, r)
+		h.listReadyScore(w, r)
 	case r.Method == http.MethodGet && ReadyScoreRgxId.MatchString(r.URL.String()):
-		h.GetReadyScore(w, r)
+		h.getReadyScore(w, r)
 	case r.Method == http.MethodGet && ReadyScoreRgxDate.MatchString(r.URL.String()):
-		h.GetReadyScoreByDate(w, r)
+		h.getReadyScoreByDate(w, r)
 	default:
 		handleError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
@@ -57,7 +57,7 @@ func (h *ReadyScoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} GenericMessage
 // @Failure 401
 // @Router /readyscore/id/{id} [get]
-func (h *ReadyScoreHandler) GetReadyScore(w http.ResponseWriter, r *http.Request) {
+func (h *ReadyScoreHandler) getReadyScore(w http.ResponseWriter, r *http.Request) {
 	idMatches := ReadyScoreRgxId.FindStringSubmatch(r.URL.String())
 
 	if len(idMatches) < 2 {
@@ -116,7 +116,7 @@ func (h *ReadyScoreHandler) GetReadyScore(w http.ResponseWriter, r *http.Request
 // @Failure 404 {object} GenericMessage
 // @Failure 401
 // @Router /readyscore/date/{date} [get]
-func (h *ReadyScoreHandler) GetReadyScoreByDate(w http.ResponseWriter, r *http.Request) {
+func (h *ReadyScoreHandler) getReadyScoreByDate(w http.ResponseWriter, r *http.Request) {
 
 	dateMatches := ReadyScoreRgxDate.FindStringSubmatch(r.URL.String())
 
@@ -178,7 +178,7 @@ func (h *ReadyScoreHandler) GetReadyScoreByDate(w http.ResponseWriter, r *http.R
 // @Failure 500 {object} GenericMessage
 // @Failure 401
 // @Router /readyscore/list [get]
-func (h *ReadyScoreHandler) ListReadyScore(w http.ResponseWriter, r *http.Request) {
+func (h *ReadyScoreHandler) listReadyScore(w http.ResponseWriter, r *http.Request) {
 	urlMatches := ReadyScoreListRgx.FindStringSubmatch(r.URL.String())
 
 	if len(urlMatches) != 3 {

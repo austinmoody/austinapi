@@ -40,7 +40,7 @@ func init() {
 	InfoLog = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 	ErrorLog = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
-	connStr := GetDatabaseConnectionString()
+	connStr := getDatabaseConnectionString()
 	DatabaseContext = context.Background()
 
 	DatabaseConnection, err = pgx.Connect(DatabaseContext, connStr)
@@ -110,7 +110,7 @@ func getIdFromUrl(regex *regexp.Regexp, url *url.URL) (int64, error) {
 	return id, nil
 }
 
-func GetDatabaseConnectionString() string {
+func getDatabaseConnectionString() string {
 	err := godotenv.Load()
 	if err != nil {
 		log.Printf(".env not found, using environment")
