@@ -1,11 +1,9 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/austinmoody/austinapi_db/austinapi_db"
-	"github.com/jackc/pgx/v5"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -77,20 +75,7 @@ func (h *ReadyScoreHandler) GetReadyScore(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	connStr := GetDatabaseConnectionString()
-	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, connStr)
-	if err != nil {
-		ErrorLog.Printf("DB Connection error: %v", err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-	defer conn.Close(ctx)
-
-	apiDb := austinapi_db.New(conn)
-
-	result, err := apiDb.GetReadyScore(ctx, id)
+	result, err := ApiDatabase.GetReadyScore(DatabaseContext, id)
 
 	if err != nil {
 		ErrorLog.Printf("error retrieving ready score with id '%d': %v", id, err)
@@ -151,20 +136,7 @@ func (h *ReadyScoreHandler) GetReadyScoreByDate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	connStr := GetDatabaseConnectionString()
-	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, connStr)
-	if err != nil {
-		ErrorLog.Printf("DB Connection error: %v", err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-	defer conn.Close(ctx)
-
-	apiDb := austinapi_db.New(conn)
-
-	result, err := apiDb.GetReadyScoreByDate(ctx, searchDate)
+	result, err := ApiDatabase.GetReadyScoreByDate(DatabaseContext, searchDate)
 
 	if err != nil {
 		ErrorLog.Printf("error retrieving ready score with date '%s': %v", dateString, err)
@@ -221,19 +193,6 @@ func (h *ReadyScoreHandler) ListReadyScore(w http.ResponseWriter, r *http.Reques
 	InfoLog.Printf("URL directive match '%s'\n", queryType)
 	InfoLog.Printf("URL token match '%s'\n", queryToken)
 
-	connStr := GetDatabaseConnectionString()
-	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, connStr)
-	if err != nil {
-		ErrorLog.Printf("database connection error: %v", err)
-		handleError(w, http.StatusInternalServerError, "Internal Error")
-		return
-	}
-	defer conn.Close(ctx)
-
-	apiDb := austinapi_db.New(conn)
-
 	params := austinapi_db.GetReadyScoresParams{
 		RowOffset: 0,
 		RowLimit:  ListRowLimit,
@@ -250,7 +209,8 @@ func (h *ReadyScoreHandler) ListReadyScore(w http.ResponseWriter, r *http.Reques
 		params.RowOffset = int32(rowOffset)
 	}
 
-	results, err := apiDb.GetReadyScores(ctx, params)
+	results, err := ApiDatabase.GetReadyScores(DatabaseContext, params)
+
 	if err != nil {
 		ErrorLog.Printf("error getting list of ready scores: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
