@@ -15,6 +15,174 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/readyscore/date/{date}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves ready score information with specified date",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "readyscore"
+                ],
+                "summary": "Get ready score information by date",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Date",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/austinapi_db.Readyscore"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/readyscore/id/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves ready score information with specified ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "readyscore"
+                ],
+                "summary": "Get ready score information by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ready Score ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/austinapi_db.Readyscore"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/readyscore/list": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves list of ready score information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token from previous calls to go\nforward in the list of items.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "readyscore"
+                ],
+                "summary": "Get list of ready score information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "next list search by next_token",
+                        "name": "next_token",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.ReadyScores"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
         "/sleep/date/{date}": {
             "get": {
                 "security": [
@@ -185,6 +353,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "austinapi_db.Readyscore": {
+            "type": "object",
+            "properties": {
+                "created_timestamp": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "score": {
+                    "type": "integer"
+                },
+                "updated_timestamp": {
+                    "type": "string"
+                }
+            }
+        },
         "austinapi_db.Sleep": {
             "type": "object",
             "properties": {
@@ -222,6 +410,20 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "main.ReadyScores": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/austinapi_db.Readyscore"
+                    }
+                },
+                "next_token": {
+                    "type": "integer"
                 }
             }
         },

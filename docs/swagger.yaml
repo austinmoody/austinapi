@@ -1,4 +1,17 @@
 definitions:
+  austinapi_db.Readyscore:
+    properties:
+      created_timestamp:
+        type: string
+      date:
+        type: string
+      id:
+        type: integer
+      score:
+        type: integer
+      updated_timestamp:
+        type: string
+    type: object
   austinapi_db.Sleep:
     properties:
       created_timestamp:
@@ -25,6 +38,15 @@ definitions:
       message:
         type: string
     type: object
+  main.ReadyScores:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/austinapi_db.Readyscore'
+        type: array
+      next_token:
+        type: integer
+    type: object
   main.Sleeps:
     properties:
       data:
@@ -37,6 +59,118 @@ definitions:
 info:
   contact: {}
 paths:
+  /readyscore/date/{date}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves ready score information with specified date
+      parameters:
+      - description: Date
+        in: path
+        name: date
+        required: true
+        type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/austinapi_db.Readyscore'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Get ready score information by date
+      tags:
+      - readyscore
+  /readyscore/id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves ready score information with specified ID
+      parameters:
+      - description: Ready Score ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/austinapi_db.Readyscore'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Get ready score information by ID
+      tags:
+      - readyscore
+  /readyscore/list:
+    get:
+      description: |-
+        Retrieves list of ready score information in descending order by date
+        Specifying no query parameters pulls list starting with latest
+        Caller can then specify a next_token from previous calls to go
+        forward in the list of items.
+      parameters:
+      - description: next list search by next_token
+        format: string
+        in: query
+        name: next_token
+        type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.ReadyScores'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Get list of ready score information
+      tags:
+      - readyscore
   /sleep/date/{date}:
     get:
       consumes:

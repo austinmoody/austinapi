@@ -46,6 +46,19 @@ func (h *ReadyScoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Get ready score information by ID
+// @Security ApiKeyAuth
+// @Description Retrieves ready score information with specified ID
+// @Tags readyscore
+// @Accept json
+// @Produce json
+// @Param id path string true "Ready Score ID"
+// @Param Authorization header string true "Bearer Token"
+// @Success 200 {object} austinapi_db.Readyscore
+// @Failure 500 {object} GenericMessage
+// @Failure 404 {object} GenericMessage
+// @Failure 401
+// @Router /readyscore/id/{id} [get]
 func (h *ReadyScoreHandler) GetReadyScore(w http.ResponseWriter, r *http.Request) {
 	idMatches := ReadyScoreRgxId.FindStringSubmatch(r.URL.String())
 
@@ -104,6 +117,19 @@ func (h *ReadyScoreHandler) GetReadyScore(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// @Summary Get ready score information by date
+// @Security ApiKeyAuth
+// @Description Retrieves ready score information with specified date
+// @Tags readyscore
+// @Accept json
+// @Produce json
+// @Param date path string true "Date"
+// @Param Authorization header string true "Bearer Token"
+// @Success 200 {object} austinapi_db.Readyscore
+// @Failure 500 {object} GenericMessage
+// @Failure 404 {object} GenericMessage
+// @Failure 401
+// @Router /readyscore/date/{date} [get]
 func (h *ReadyScoreHandler) GetReadyScoreByDate(w http.ResponseWriter, r *http.Request) {
 
 	dateMatches := ReadyScoreRgxDate.FindStringSubmatch(r.URL.String())
@@ -165,6 +191,20 @@ func (h *ReadyScoreHandler) GetReadyScoreByDate(w http.ResponseWriter, r *http.R
 	}
 }
 
+// @Summary Get list of ready score information
+// @Security ApiKeyAuth
+// @Description Retrieves list of ready score information in descending order by date
+// @Description Specifying no query parameters pulls list starting with latest
+// @Description Caller can then specify a next_token from previous calls to go
+// @Description forward in the list of items.
+// @Tags readyscore
+// @Produce json
+// @Param next_token query string false "next list search by next_token" Format(string)
+// @Param Authorization header string true "Bearer Token"
+// @Success 200 {object} ReadyScores
+// @Failure 500 {object} GenericMessage
+// @Failure 401
+// @Router /readyscore/list [get]
 func (h *ReadyScoreHandler) ListReadyScore(w http.ResponseWriter, r *http.Request) {
 	urlMatches := ReadyScoreListRgx.FindStringSubmatch(r.URL.String())
 
