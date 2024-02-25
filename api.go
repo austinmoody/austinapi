@@ -75,6 +75,9 @@ func main() {
 	mux.Handle("/readyscore", authenticator(&ReadyScoreHandler{}))
 	mux.Handle("/readyscore/", authenticator(&ReadyScoreHandler{}))
 
+	mux.Handle("/heartrate", authenticator(&HeartRateHandler{}))
+	mux.Handle("/heartrate/", authenticator(&HeartRateHandler{}))
+
 	http.ListenAndServe(ListeningPort, mux)
 
 	defer DatabaseConnection.Close(DatabaseContext)
