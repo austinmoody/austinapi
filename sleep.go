@@ -152,7 +152,7 @@ func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
 	sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
 
 	if len(sleepDateMatches) < 2 {
-		ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
+		ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxDate.String())
 		handleError(w, http.StatusInternalServerError, "Issue parsing specified date")
 		return
 	}
@@ -253,7 +253,7 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 
 	params := austinapi_db.GetSleepsParams{
 		RowOffset: 0,
-		RowLimit:  5,
+		RowLimit:  ListRowLimit,
 	}
 
 	if queryType == "next_token" {
