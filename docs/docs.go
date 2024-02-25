@@ -53,7 +53,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/main.Sleep"
+                            "$ref": "#/definitions/austinapi_db.Sleep"
                         }
                     },
                     "401": {
@@ -112,7 +112,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/main.Sleep"
+                            "$ref": "#/definitions/austinapi_db.Sleep"
                         }
                     },
                     "401": {
@@ -140,7 +140,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Retrieves list of sleep information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token or previous_token returned from\ncalls to go forward and back in the list of items.  Only next_token OR\nprevious_token should be specified.",
+                "description": "Retrieves list of sleep information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token from previous calls to go\nforward in the list of items.",
                 "produces": [
                     "application/json"
                 ],
@@ -154,13 +154,6 @@ const docTemplate = `{
                         "format": "string",
                         "description": "next list search by next_token",
                         "name": "next_token",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "format": "string",
-                        "description": "previous list search by previous_token",
-                        "name": "previous_token",
                         "in": "query"
                     },
                     {
@@ -192,42 +185,42 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "main.GenericMessage": {
+        "austinapi_db.Sleep": {
             "type": "object",
             "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.Sleep": {
-            "type": "object",
-            "properties": {
-                "createdTimestamp": {
+                "created_timestamp": {
                     "type": "string"
                 },
                 "date": {
                     "type": "string"
                 },
-                "deepSleep": {
+                "deep_sleep": {
                     "type": "integer"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
-                "lightSleep": {
+                "light_sleep": {
                     "type": "integer"
                 },
                 "rating": {
                     "type": "integer"
                 },
-                "remSleep": {
+                "rem_sleep": {
                     "type": "integer"
                 },
-                "totalSleep": {
+                "total_sleep": {
                     "type": "integer"
                 },
-                "updatedTimestamp": {
+                "updated_timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.GenericMessage": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }
@@ -238,14 +231,11 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/main.Sleep"
+                        "$ref": "#/definitions/austinapi_db.Sleep"
                     }
                 },
                 "next_token": {
-                    "type": "string"
-                },
-                "previous_token": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         }

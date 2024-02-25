@@ -1,40 +1,38 @@
 definitions:
-  main.GenericMessage:
+  austinapi_db.Sleep:
     properties:
-      message:
-        type: string
-    type: object
-  main.Sleep:
-    properties:
-      createdTimestamp:
+      created_timestamp:
         type: string
       date:
         type: string
-      deepSleep:
+      deep_sleep:
         type: integer
       id:
-        type: string
-      lightSleep:
+        type: integer
+      light_sleep:
         type: integer
       rating:
         type: integer
-      remSleep:
+      rem_sleep:
         type: integer
-      totalSleep:
+      total_sleep:
         type: integer
-      updatedTimestamp:
+      updated_timestamp:
+        type: string
+    type: object
+  main.GenericMessage:
+    properties:
+      message:
         type: string
     type: object
   main.Sleeps:
     properties:
       data:
         items:
-          $ref: '#/definitions/main.Sleep'
+          $ref: '#/definitions/austinapi_db.Sleep'
         type: array
       next_token:
-        type: string
-      previous_token:
-        type: string
+        type: integer
     type: object
 info:
   contact: {}
@@ -61,7 +59,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/main.Sleep'
+            $ref: '#/definitions/austinapi_db.Sleep'
         "401":
           description: Unauthorized
         "404":
@@ -99,7 +97,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/main.Sleep'
+            $ref: '#/definitions/austinapi_db.Sleep'
         "401":
           description: Unauthorized
         "404":
@@ -120,19 +118,13 @@ paths:
       description: |-
         Retrieves list of sleep information in descending order by date
         Specifying no query parameters pulls list starting with latest
-        Caller can then specify a next_token or previous_token returned from
-        calls to go forward and back in the list of items.  Only next_token OR
-        previous_token should be specified.
+        Caller can then specify a next_token from previous calls to go
+        forward in the list of items.
       parameters:
       - description: next list search by next_token
         format: string
         in: query
         name: next_token
-        type: string
-      - description: previous list search by previous_token
-        format: string
-        in: query
-        name: previous_token
         type: string
       - description: Bearer Token
         in: header
