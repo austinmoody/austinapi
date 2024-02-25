@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"time"
 )
 
 // TODO - create requestId to tie things together in the logs
@@ -26,102 +25,9 @@ type Sleeps struct {
 	NextToken int32                `json:"next_token"`
 }
 
-type Sleep struct {
-	ID               string
-	Date             time.Time
-	Rating           int64
-	TotalSleep       int
-	DeepSleep        int
-	LightSleep       int
-	RemSleep         int
-	CreatedTimestamp time.Time
-	UpdatedTimestamp time.Time
-}
-
-type SleepsResult []austinapi_db.SleepsRow
-type SleepsItem austinapi_db.SleepsRow
-
-func (si SleepsItem) ToSleep() Sleep {
-	var sleep Sleep
-	// TODO - handle potential errors from Encode
-	sleep.ID, _ = IdHasher.Encode([]uint64{uint64(si.ID)})
-	sleep.Date = si.Date
-	sleep.Rating = si.Rating
-	sleep.TotalSleep = si.TotalSleep
-	sleep.DeepSleep = si.DeepSleep
-	sleep.LightSleep = si.LightSleep
-	sleep.RemSleep = si.LightSleep
-	sleep.CreatedTimestamp = si.CreatedTimestamp
-	sleep.UpdatedTimestamp = si.UpdatedTimestamp
-
-	return sleep
-}
-
-//func (sr SleepsResult) ToSleeps() Sleeps {
-//	var sleeps Sleeps
-//
-//	var data []Sleep
-//
-//	for _, row := range sr {
-//		data = append(data, SleepsItem(row).ToSleep())
-//	}
-//
-//	sleeps.Data = data
-//
-//	sleeps.NextToken = sr.GetNextToken()
-//	sleeps.PreviousToken = sr.GetPreviousToken()
-//
-//	return sleeps
-//}
-
-type SleepResult austinapi_db.Sleep
-
-func (s SleepResult) ToSleep() Sleep {
-	var sleep Sleep
-
-	sleep.ID, _ = IdHasher.Encode([]uint64{uint64(s.ID)})
-	sleep.Date = s.Date
-	sleep.Rating = s.Rating
-	sleep.TotalSleep = s.TotalSleep
-	sleep.DeepSleep = s.DeepSleep
-	sleep.LightSleep = s.LightSleep
-	sleep.RemSleep = s.RemSleep
-	sleep.CreatedTimestamp = s.CreatedTimestamp
-	sleep.UpdatedTimestamp = s.UpdatedTimestamp
-
-	return sleep
-}
-
-func (sr SleepsResult) GetNextToken() string {
-	var nextToken string
-
-	nextTokenInt := sr[len(sr)-1].NextID
-	if nextTokenInt < 1 {
-		nextToken = ""
-	} else {
-		id, _ := IdHasher.Encode([]uint64{uint64(nextTokenInt)})
-		nextToken = id
-	}
-
-	return nextToken
-}
-
-func (sr SleepsResult) GetPreviousToken() string {
-	var previousToken string
-	previousTokenInt := sr[0].PreviousID
-	if previousTokenInt < 1 {
-		previousToken = ""
-	} else {
-		id, _ := IdHasher.Encode([]uint64{uint64(previousTokenInt)})
-		previousToken = id
-	}
-
-	return previousToken
-}
-
 func init() {
-	SleepRgxId = regexp.MustCompile(`^/sleep/id/([0-9]{1,})$`)
-	SleepListRgx = regexp.MustCompile(`^/sleep/list(?:\?(next_token)=([0-9]{1,}))?$`)
+	SleepRgxId = regexp.MustCompile(`^/sleep/id/([0-9]+)$`)
+	SleepListRgx = regexp.MustCompile(`^/sleep/list(?:\?(next_token)=([0-9]+))?$`)
 	SleepRgxDate = regexp.MustCompile(`^/sleep/date/([0-9]{4}-[0-9]{2}-[0-9]{2})$`)
 }
 
@@ -163,7 +69,7 @@ func handleError(w http.ResponseWriter, statusCode int, message string) {
 // @Produce json
 // @Param id path string true "Sleep ID"
 // @Param Authorization header string true "Bearer Token"
-// @Success 200 {object} Sleep
+// @Success 200 {object} austinapi_db.Sleep
 // @Failure 500 {object} GenericMessage
 // @Failure 404 {object} GenericMessage
 // @Failure 401
@@ -229,7 +135,7 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param date path string true "Date"
 // @Param Authorization header string true "Bearer Token"
-// @Success 200 {object} Sleep
+// @Success 200 {object} austinapi_db.Sleep
 // @Failure 500 {object} GenericMessage
 // @Failure 404 {object} GenericMessage
 // @Failure 401
@@ -299,13 +205,11 @@ func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
 // @Security ApiKeyAuth
 // @Description Retrieves list of sleep information in descending order by date
 // @Description Specifying no query parameters pulls list starting with latest
-// @Description Caller can then specify a next_token or previous_token returned from
-// @Description calls to go forward and back in the list of items.  Only next_token OR
-// @Description previous_token should be specified.
+// @Description Caller can then specify a next_token from previous calls to go
+// @Description forward in the list of items.
 // @Tags sleep
 // @Produce json
 // @Param next_token query string false "next list search by next_token" Format(string)
-// @Param previous_token query string false "previous list search by previous_token" Format(string)
 // @Param Authorization header string true "Bearer Token"
 // @Success 200 {object} Sleeps
 // @Failure 500 {object} GenericMessage
@@ -363,7 +267,7 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(results) < 1 {
-		ErrorLog.Printf("no results from database with '%' token '%s'", queryType, queryToken)
+		ErrorLog.Printf("no results from database with '%s' token '%s'", queryType, queryToken)
 		handleError(w, http.StatusNotFound, "no results found")
 		return
 	}
