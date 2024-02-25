@@ -65,8 +65,8 @@ func main() {
 	mux.Handle("/sleep", authenticator(&SleepHandler{}))
 	mux.Handle("/sleep/", authenticator(&SleepHandler{}))
 
-	mux.Handle("/readyscore", authenticator(&ReadyScoreHandler{}))
-	mux.Handle("/readyscore/", authenticator(&ReadyScoreHandler{}))
+	//mux.Handle("/readyscore", authenticator(&ReadyScoreHandler{}))
+	//mux.Handle("/readyscore/", authenticator(&ReadyScoreHandler{}))
 
 	http.ListenAndServe(ListeningPort, mux)
 

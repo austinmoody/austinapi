@@ -2,6 +2,8 @@ github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/austinmoody/austinapi_db v0.0.13 h1:7xzMnTVsxaogtmHrxtuMALK9D859YZ4OIrqjkm/LJpA=
 github.com/austinmoody/austinapi_db v0.0.13/go.mod h1:C2DAp+MY1utOvEdpJaK9bspeawlLMZXVvullBiTXFLo=
+github.com/austinmoody/austinapi_db v0.0.14 h1:XRMWZ3MxNkzAiQrfPN+NcofaO/sGF/sGiD31IqB5Lnk=
+github.com/austinmoody/austinapi_db v0.0.14/go.mod h1:C2DAp+MY1utOvEdpJaK9bspeawlLMZXVvullBiTXFLo=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/cristalhq/jwt/v5 v5.4.0 h1:Wxi1TocFHaijyV608j7v7B9mPc4ZNjvWT3LKBO0d4QI=
 github.com/cristalhq/jwt/v5 v5.4.0/go.mod h1:+b/BzaCWEpFDmXxspJ5h4SdJ1N/45KMjKOetWzmHvDA=

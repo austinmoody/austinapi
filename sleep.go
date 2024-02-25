@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/austinmoody/austinapi_db/austinapi_db"
 	"github.com/jackc/pgx/v5"
 	"net/http"
@@ -104,7 +105,7 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 
 	apiDb := austinapi_db.New(conn)
 
-	getSleepResult, err := apiDb.GetSleep(ctx, sleepId)
+	result, err := apiDb.GetSleep(ctx, sleepId)
 
 	if err != nil {
 		ErrorLog.Printf("error retrieving sleep with id '%v': %v", sleepId, err)
@@ -112,7 +113,13 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonBytes, err := json.Marshal(getSleepResult)
+	if len(result) != 1 {
+		InfoLog.Printf("sleep with id '%d' was not found in database", sleepId)
+		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with id %d", sleepId))
+		return
+	}
+
+	jsonBytes, err := json.Marshal(result[0])
 	if err != nil {
 		ErrorLog.Printf("error marshaling JSON response: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
@@ -267,7 +274,7 @@ func (h *SleepHandler) ListSleep(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(results) < 1 {
-		ErrorLog.Printf("no results from database with '%s' token '%s'", queryType, queryToken)
+		ErrorLog.Printf("no sleep results from database with '%s' token '%s'", queryType, queryToken)
 		handleError(w, http.StatusNotFound, "no results found")
 		return
 	}
