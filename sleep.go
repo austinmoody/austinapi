@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 // TODO - create requestId to tie things together in the logs
@@ -148,63 +149,63 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 // @Failure 401
 // @Router /sleep/date/{date} [get]
 func (h *SleepHandler) GetSleepByDate(w http.ResponseWriter, r *http.Request) {
-	//sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
-	//
-	//if len(sleepDateMatches) < 2 {
-	//	ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
-	//	handleError(w, http.StatusInternalServerError, "Issue parsing specified date")
-	//	return
-	//}
-	//
-	//InfoLog.Printf("URL token match '%s'\n", sleepDateMatches[1])
-	//
-	//sleepDateString := sleepDateMatches[1]
-	//sleepDate, err := time.Parse("2006-01-02", sleepDateString)
-	//if err != nil {
-	//	ErrorLog.Printf("Unable to parse '%s' to time.Time object: %v", sleepDateString, err)
-	//	handleError(w, http.StatusInternalServerError, "Internal Error")
-	//	return
-	//}
-	//
-	//connStr := GetDatabaseConnectionString()
-	//ctx := context.Background()
-	//
-	//conn, err := pgx.Connect(ctx, connStr)
-	//if err != nil {
-	//	ErrorLog.Printf("DB Connection error: %v", err)
-	//	handleError(w, http.StatusInternalServerError, "Internal Error")
-	//	return
-	//}
-	//defer conn.Close(ctx)
-	//
-	//apiDb := austinapi_db.New(conn)
-	//
-	//getSleepResult, err := apiDb.GetSleepByDate(ctx, sleepDate)
-	//
-	//if err != nil {
-	//	ErrorLog.Printf("error retrieving sleep with date '%v': %v", sleepDateString, err)
-	//	handleError(w, http.StatusInternalServerError, "Internal Error")
-	//	return
-	//}
-	//
-	//if len(getSleepResult) != 1 {
-	//	InfoLog.Printf("sleep with date '%s' was not found in database", sleepDateString)
-	//	handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with date %s", sleepDateString))
-	//	return
-	//}
-	//
-	//jsonBytes, err := json.Marshal(SleepResult(getSleepResult[0]).ToSleep())
-	//if err != nil {
-	//	ErrorLog.Printf("error marshaling JSON response: %v", err)
-	//	handleError(w, http.StatusInternalServerError, "Internal Error")
-	//	return
-	//}
-	//
-	//w.WriteHeader(http.StatusOK)
-	//_, err = w.Write(jsonBytes)
-	//if err != nil {
-	//	ErrorLog.Printf("error writing http response: %v\n", err)
-	//}
+	sleepDateMatches := SleepRgxDate.FindStringSubmatch(r.URL.String())
+
+	if len(sleepDateMatches) < 2 {
+		ErrorLog.Printf("error regex parsing url '%s' with regex '%s'", r.URL.Path, SleepRgxId.String())
+		handleError(w, http.StatusInternalServerError, "Issue parsing specified date")
+		return
+	}
+
+	InfoLog.Printf("URL token match '%s'\n", sleepDateMatches[1])
+
+	sleepDateString := sleepDateMatches[1]
+	sleepDate, err := time.Parse("2006-01-02", sleepDateString)
+	if err != nil {
+		ErrorLog.Printf("Unable to parse '%s' to time.Time object: %v", sleepDateString, err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+
+	connStr := GetDatabaseConnectionString()
+	ctx := context.Background()
+
+	conn, err := pgx.Connect(ctx, connStr)
+	if err != nil {
+		ErrorLog.Printf("DB Connection error: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+	defer conn.Close(ctx)
+
+	apiDb := austinapi_db.New(conn)
+
+	result, err := apiDb.GetSleepByDate(ctx, sleepDate)
+
+	if err != nil {
+		ErrorLog.Printf("error retrieving sleep with date '%v': %v", sleepDateString, err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+
+	if len(result) != 1 {
+		InfoLog.Printf("sleep with date '%s' was not found in database", sleepDateString)
+		handleError(w, http.StatusNotFound, fmt.Sprintf("Sleep not found with date %s", sleepDateString))
+		return
+	}
+
+	jsonBytes, err := json.Marshal(result[0])
+	if err != nil {
+		ErrorLog.Printf("error marshaling JSON response: %v", err)
+		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(jsonBytes)
+	if err != nil {
+		ErrorLog.Printf("error writing http response: %v\n", err)
+	}
 
 }
 
