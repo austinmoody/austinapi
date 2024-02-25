@@ -49,20 +49,6 @@ func (h *SleepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func handleError(w http.ResponseWriter, statusCode int, message string) {
-	w.WriteHeader(statusCode)
-
-	jsonBytes, err := json.Marshal(GenericMessage{Message: message})
-	if err != nil {
-		ErrorLog.Printf("error marshaling JSON error response: %v", err)
-		return
-	}
-	_, err = w.Write(jsonBytes)
-	if err != nil {
-		ErrorLog.Printf("error writing error response: %v", err)
-	}
-}
-
 // @Summary Get sleep information by ID
 // @Security ApiKeyAuth
 // @Description Retrieves sleep information with specified ID
@@ -91,6 +77,7 @@ func (h *SleepHandler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ErrorLog.Printf("issue converting sleep id to int64: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
 	}
 
 	connStr := GetDatabaseConnectionString()

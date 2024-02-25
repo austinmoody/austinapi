@@ -74,6 +74,7 @@ func (h *ReadyScoreHandler) GetReadyScore(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		ErrorLog.Printf("issue converting id to int64: %v", err)
 		handleError(w, http.StatusInternalServerError, "Internal Error")
+		return
 	}
 
 	connStr := GetDatabaseConnectionString()

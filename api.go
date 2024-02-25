@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -57,4 +58,18 @@ func main() {
 
 	http.ListenAndServe(ListeningPort, mux)
 
+}
+
+func handleError(w http.ResponseWriter, statusCode int, message string) {
+	w.WriteHeader(statusCode)
+
+	jsonBytes, err := json.Marshal(GenericMessage{Message: message})
+	if err != nil {
+		ErrorLog.Printf("error marshaling JSON error response: %v", err)
+		return
+	}
+	_, err = w.Write(jsonBytes)
+	if err != nil {
+		ErrorLog.Printf("error writing error response: %v", err)
+	}
 }
