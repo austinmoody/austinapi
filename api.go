@@ -69,6 +69,7 @@ func main() {
 		http.ServeFile(w, r, "./docs/swagger.yaml")
 	})
 
+	// OURA RING DATA
 	mux.Handle("/sleep", authenticator(&SleepHandler{}))
 	mux.Handle("/sleep/", authenticator(&SleepHandler{}))
 
@@ -77,6 +78,12 @@ func main() {
 
 	mux.Handle("/heartrate", authenticator(&HeartRateHandler{}))
 	mux.Handle("/heartrate/", authenticator(&HeartRateHandler{}))
+
+	mux.Handle("/stress", authenticator(&StressHandler{}))
+	mux.Handle("/stress/", authenticator(&StressHandler{}))
+
+	mux.Handle("/spo2", authenticator(&Spo2Handler{}))
+	mux.Handle("/spo2/", authenticator(&Spo2Handler{}))
 
 	http.ListenAndServe(ListeningPort, mux)
 

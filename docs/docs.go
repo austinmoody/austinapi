@@ -350,6 +350,174 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/stress/date/{date}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves stress information with specified date",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stress"
+                ],
+                "summary": "Get stress information by date",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Date",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/austinapi_db.Stress"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/stress/id/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves stress information with specified ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stress"
+                ],
+                "summary": "Get stress information by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Stress ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/austinapi_db.Stress"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/stress/list": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves list of stress information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token from previous calls to go\nforward in the list of items.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stress"
+                ],
+                "summary": "Get list of stress information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "next list search by next_token",
+                        "name": "next_token",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Stresses"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -405,6 +573,26 @@ const docTemplate = `{
                 }
             }
         },
+        "austinapi_db.Stress": {
+            "type": "object",
+            "properties": {
+                "created_timestamp": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "high_stress_duration": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updated_timestamp": {
+                    "type": "string"
+                }
+            }
+        },
         "main.GenericMessage": {
             "type": "object",
             "properties": {
@@ -434,6 +622,20 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/austinapi_db.Sleep"
+                    }
+                },
+                "next_token": {
+                    "type": "integer"
+                }
+            }
+        },
+        "main.Stresses": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/austinapi_db.Stress"
                     }
                 },
                 "next_token": {

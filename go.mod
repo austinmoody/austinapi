@@ -3,11 +3,10 @@ module github.com/austinmoody/austinapi
 go 1.21.5
 
 require (
-	github.com/austinmoody/austinapi_db v0.0.14
+	github.com/austinmoody/austinapi_db v0.0.15
 	github.com/cristalhq/jwt/v5 v5.4.0
 	github.com/jackc/pgx/v5 v5.5.3
 	github.com/joho/godotenv v1.5.1
-	github.com/sqids/sqids-go v0.4.1
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
 )
