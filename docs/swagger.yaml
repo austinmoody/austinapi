@@ -1,4 +1,21 @@
 definitions:
+  austinapi_db.Heartrate:
+    properties:
+      average:
+        type: integer
+      created_timestamp:
+        type: string
+      date:
+        type: string
+      high:
+        type: integer
+      id:
+        type: integer
+      low:
+        type: integer
+      updated_timestamp:
+        type: string
+    type: object
   austinapi_db.Readyscore:
     properties:
       created_timestamp:
@@ -51,6 +68,15 @@ definitions:
       message:
         type: string
     type: object
+  main.HeartRates:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/austinapi_db.Heartrate'
+        type: array
+      next_token:
+        type: integer
+    type: object
   main.ReadyScores:
     properties:
       data:
@@ -81,6 +107,118 @@ definitions:
 info:
   contact: {}
 paths:
+  /heartrate/date/{date}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves heart rate information with specified date
+      parameters:
+      - description: Date
+        in: path
+        name: date
+        required: true
+        type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/austinapi_db.Heartrate'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Get heart rate information by date
+      tags:
+      - heartrate
+  /heartrate/id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves heart rate information with specified ID
+      parameters:
+      - description: Heart Rate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/austinapi_db.Heartrate'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Get heart rate information by ID
+      tags:
+      - heartrate
+  /heartrate/list:
+    get:
+      description: |-
+        Retrieves list of heart rate information in descending order by date
+        Specifying no query parameters pulls list starting with latest
+        Caller can then specify a next_token from previous calls to go
+        forward in the list of items.
+      parameters:
+      - description: next list search by next_token
+        format: string
+        in: query
+        name: next_token
+        type: string
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.HeartRates'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.GenericMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Get list of heart rate information
+      tags:
+      - heartrate
   /readyscore/date/{date}:
     get:
       consumes:

@@ -15,6 +15,174 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/heartrate/date/{date}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves heart rate information with specified date",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "heartrate"
+                ],
+                "summary": "Get heart rate information by date",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Date",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/austinapi_db.Heartrate"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/heartrate/id/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves heart rate information with specified ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "heartrate"
+                ],
+                "summary": "Get heart rate information by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Heart Rate ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/austinapi_db.Heartrate"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/heartrate/list": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves list of heart rate information in descending order by date\nSpecifying no query parameters pulls list starting with latest\nCaller can then specify a next_token from previous calls to go\nforward in the list of items.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "heartrate"
+                ],
+                "summary": "Get list of heart rate information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "next list search by next_token",
+                        "name": "next_token",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.HeartRates"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.GenericMessage"
+                        }
+                    }
+                }
+            }
+        },
         "/readyscore/date/{date}": {
             "get": {
                 "security": [
@@ -521,6 +689,32 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "austinapi_db.Heartrate": {
+            "type": "object",
+            "properties": {
+                "average": {
+                    "type": "integer"
+                },
+                "created_timestamp": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "high": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "low": {
+                    "type": "integer"
+                },
+                "updated_timestamp": {
+                    "type": "string"
+                }
+            }
+        },
         "austinapi_db.Readyscore": {
             "type": "object",
             "properties": {
@@ -598,6 +792,20 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "main.HeartRates": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/austinapi_db.Heartrate"
+                    }
+                },
+                "next_token": {
+                    "type": "integer"
                 }
             }
         },
